@@ -1,0 +1,1058 @@
+<!doctype html>
+<html lang="az">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0d7a70">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="ХитСезон">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-192.png">
+<title>ХитСезонАнбар</title>
+<style>
+:root { color-scheme: light; padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; }
+img { max-width: 100%; }
+html, body { max-width: 100%; overflow-x: hidden; }
+[hidden] { display: none !important; }
+/* Layout: yapışqan üst zolaq (ad + yeni məhsul), altında axtarış və məhsul siyahısı; telefonda hər məhsul ayrıca kart, geniş ekranda cədvəl. Form telefonda aşağıdan açılan lövhədir. */
+:root {
+  --bg: #f1f4f7;
+  --surface: #ffffff;
+  --surface-2: #f6f8fa;
+  --fg: #101b26;
+  --muted: #5d6e7d;
+  --line: #dde4ea;
+  --accent: #0d7a70;
+  --accent-fg: #ffffff;
+  --accent-soft: #d9f1ee;
+  --danger: #b3261e;
+  --warn-bg: #fff2cf;
+  --warn-fg: #5f4400;
+  --shadow: 0 1px 2px rgba(16, 27, 38, 0.06), 0 6px 18px rgba(16, 27, 38, 0.06);
+  --font-ui: system-ui, -apple-system, "SF Pro Text", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0c1319; --surface: #151f28; --surface-2: #1b2732; --fg: #e8eff4; --muted: #94a5b3; --line: #273744;
+    --accent: #34cdbd; --accent-fg: #04211e; --accent-soft: #12403c; --danger: #ff8b7d;
+    --warn-bg: #3a2f0d; --warn-fg: #f3d27a; --shadow: 0 1px 2px rgba(0,0,0,.4), 0 6px 18px rgba(0,0,0,.35);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0c1319; --surface: #151f28; --surface-2: #1b2732; --fg: #e8eff4; --muted: #94a5b3; --line: #273744;
+  --accent: #34cdbd; --accent-fg: #04211e; --accent-soft: #12403c; --danger: #ff8b7d;
+  --warn-bg: #3a2f0d; --warn-fg: #f3d27a; --shadow: 0 1px 2px rgba(0,0,0,.4), 0 6px 18px rgba(0,0,0,.35);
+  color-scheme: dark;
+}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+body {
+  background: var(--bg); color: var(--fg); font-family: var(--font-ui); font-size: 16px; line-height: 1.45;
+  padding-block: 0 56px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); background: var(--bg); z-index: 10; }
+.wrap { max-width: 1120px; margin: 0 auto; }
+button, input, select, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; white-space: nowrap; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.top { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 9; background: var(--bg); padding-block: 14px 10px; display: flex; flex-direction: column; gap: 10px; }
+.top .head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 12px; }
+.top .head > div:first-child { flex: 1 1 auto; min-width: 0; }
+h1 { font-size: 1.35rem; margin: 0; letter-spacing: -0.015em; overflow-wrap: anywhere; }
+.count { color: var(--muted); font-size: 0.85rem; }
+.head-actions { display: flex; gap: 8px; align-items: center; margin-left: auto; }
+
+.btn { border: 1px solid var(--line); background: var(--surface); border-radius: 12px; padding: 0 16px; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+.btn:hover { border-color: var(--accent); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-fg); font-weight: 650; }
+.btn.small { min-height: 38px; padding: 0 12px; font-size: 0.9rem; border-radius: 10px; }
+.btn.danger { color: var(--danger); }
+.btn.ghost { background: transparent; }
+
+.search { position: relative; }
+.search input { width: 100%; min-height: 46px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); padding: 0 14px; font-size: 16px; }
+
+.banner { background: var(--warn-bg); color: var(--warn-fg); padding: 10px 12px; border-radius: 10px; font-size: 0.9rem; margin-bottom: 10px; }
+.banner[hidden] { display: none; }
+
+/* Cədvəl (geniş ekran) */
+.list { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--shadow); overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; min-width: 860px; }
+th, td { padding: 12px 14px; text-align: left; border-bottom: 1px solid var(--line); vertical-align: middle; }
+th { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); font-weight: 600; white-space: nowrap; }
+tbody tr:last-child td { border-bottom: 0; }
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+td.name { font-weight: 650; }
+.mono { font-family: var(--font-mono); font-size: 0.9rem; white-space: nowrap; }
+.chip { display: inline-block; padding: 3px 10px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); font-size: 0.8rem; font-weight: 600; white-space: nowrap; }
+.stores { display: grid; grid-template-columns: repeat(6, 24px); gap: 3px; }
+.sq { height: 22px; border-radius: 6px; border: 1px solid var(--line); color: var(--muted); font-size: 0.7rem; display: grid; place-items: center; font-variant-numeric: tabular-nums; }
+.sq.on { background: var(--accent); border-color: var(--accent); color: var(--accent-fg); font-weight: 700; }
+.cnt { font-size: 0.75rem; color: var(--muted); margin-top: 4px; }
+td.act { white-space: nowrap; text-align: right; }
+td.act .btn + .btn { margin-left: 6px; }
+.empty { padding: 44px 18px; text-align: center; color: var(--muted); }
+.empty[hidden] { display: none; }
+
+/* Kartlar (telefon) */
+@media (max-width: 760px) {
+  .list { background: transparent; border: 0; box-shadow: none; overflow: visible; }
+  table, tbody { display: block; min-width: 0; }
+  thead { display: none; }
+  tbody { display: flex; flex-direction: column; gap: 12px; }
+  tr { display: block; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; box-shadow: var(--shadow); padding: 14px 16px; }
+  td { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 7px 0; border: 0; text-align: right; }
+  td[data-l]::before { content: attr(data-l); color: var(--muted); font-size: 0.85rem; text-align: left; flex: none; }
+  tbody tr:last-child td { border-bottom: 0; }
+  td.name { font-size: 1.1rem; text-align: left; padding-top: 0; justify-content: flex-start; }
+  td.stores-td { flex-direction: column; align-items: flex-start; }
+  td.stores-td::before { margin-bottom: 4px; }
+  .stores { grid-template-columns: repeat(6, 1fr); width: 100%; }
+  .sq { height: 30px; }
+  td.act { padding-top: 12px; margin-top: 6px; border-top: 1px solid var(--line); justify-content: flex-end; gap: 8px; }
+  td.act .btn { flex: 1; }
+}
+
+/* Pəncərə / aşağıdan lövhə */
+.overlay { position: fixed; inset: 0; background: rgba(6, 12, 18, 0.55); display: flex; align-items: center; justify-content: center; z-index: 30; padding: 16px; }
+.overlay[hidden] { display: none; }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; width: 100%; max-width: 560px; max-height: 92vh; max-height: 92dvh; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 16px; -webkit-overflow-scrolling: touch; }
+.panel h2 { margin: 0; font-size: 1.2rem; }
+@media (max-width: 620px) {
+  .overlay { align-items: flex-end; padding: 0; }
+  .panel { border-radius: 20px 20px 0 0; max-height: 94vh; max-height: 94dvh; padding-bottom: calc(20px + env(safe-area-inset-bottom, 0px)); padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+}
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.grid2 > * { min-width: 0; }
+label.l, .l { display: flex; flex-direction: column; gap: 6px; font-size: 0.85rem; color: var(--muted); min-width: 0; }
+.field { background: var(--surface-2); border: 1px solid var(--line); border-radius: 12px; min-height: 48px; padding: 0 14px; width: 100%; min-width: 0; font-size: 16px; color: var(--fg); }
+textarea.field { padding: 12px 14px; min-height: 130px; font-family: var(--font-mono); font-size: 0.85rem; resize: vertical; }
+
+.seg { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.seg label { position: relative; }
+.seg input { position: absolute; opacity: 0; inset: 0; width: 100%; height: 100%; margin: 0; cursor: pointer; }
+.seg span { display: flex; align-items: center; justify-content: center; min-height: 48px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface-2); color: var(--fg); font-weight: 600; }
+.seg input:checked + span { background: var(--accent); border-color: var(--accent); color: var(--accent-fg); }
+.seg input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.pick-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.pick-head .t { font-size: 0.85rem; color: var(--muted); }
+.tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 8px; }
+.tile { position: relative; }
+.tile input { position: absolute; opacity: 0; inset: 0; width: 100%; height: 100%; margin: 0; cursor: pointer; }
+.tile span { display: flex; align-items: center; gap: 8px; min-height: 48px; padding: 6px 10px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface-2); font-size: 0.92rem; overflow-wrap: anywhere; }
+.tile b { flex: none; width: 24px; height: 24px; border-radius: 8px; display: grid; place-items: center; font-size: 0.78rem; background: var(--surface); border: 1px solid var(--line); font-variant-numeric: tabular-nums; }
+.tile input:checked + span { background: var(--accent-soft); border-color: var(--accent); color: var(--fg); }
+.tile input:checked + span b { background: var(--accent); border-color: var(--accent); color: var(--accent-fg); }
+.tile input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.row.end { justify-content: flex-end; }
+.err { color: var(--danger); font-size: 0.9rem; min-height: 1.2em; }
+.note { color: var(--muted); font-size: 0.85rem; margin: 0; }
+.toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(20px + env(safe-area-inset-bottom, 0px)); background: var(--fg); color: var(--bg); padding: 11px 18px; border-radius: 12px; z-index: 40; font-size: 0.92rem; max-width: calc(100% - 32px); }
+.toast[hidden] { display: none; }
+.chk-row { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface-2); cursor: pointer; }
+.chk-row input { width: 22px; height: 22px; accent-color: var(--accent); flex: none; }
+.share-box { margin-top: 10px; padding: 12px 14px; border-radius: 12px; background: var(--accent-soft); color: var(--fg); font-size: 0.95rem; }
+.share-box b { font-size: 1.1rem; }
+.pdfsec { display: flex; flex-direction: column; gap: 8px; padding-top: 14px; border-top: 1px solid var(--line); }
+.pdfsec h3 { margin: 0; font-size: 1rem; }
+.pdfrow { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--line); }
+.pdfrow:last-child { border-bottom: 0; }
+.pdfname { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.pdfname b { flex: none; width: 30px; height: 30px; border-radius: 9px; display: grid; place-items: center; background: var(--accent-soft); color: var(--accent); font-size: 0.85rem; font-variant-numeric: tabular-nums; }
+.pdfname > div { min-width: 0; overflow-wrap: anywhere; }
+.btn[disabled] { opacity: 0.45; cursor: default; }
+@media (max-width: 560px) { .head-actions .btn { padding: 0 14px; } .hide-s { display: none; } h1 { font-size: 1.25rem; } }
+@media (max-width: 420px) { .head-actions { width: 100%; } .head-actions .btn.primary { flex: 1; } }
+@media (prefers-reduced-motion: no-preference) { .btn, .tile span, .seg span { transition: background 0.12s, border-color 0.12s; } }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <div class="top">
+    <div class="head">
+      <div>
+        <h1>ХитСезонАнбар</h1>
+        <div class="count" id="count"></div>
+      </div>
+      <div class="head-actions">
+        <button class="btn ghost" id="btnMore" aria-label="Ayarlar">⋯</button>
+        <button class="btn" id="btnPdf">PDF</button>
+        <button class="btn primary" id="btnAdd">+ Yeni<span class="hide-s"> məhsul</span></button>
+      </div>
+    </div>
+    <div class="search"><input id="q" type="search" placeholder="Axtar: ad, cins və ya kod" aria-label="Axtarış" autocomplete="off"></div>
+  </div>
+
+  <div class="banner" id="banner" hidden></div>
+
+  <section class="list">
+    <table>
+      <thead>
+        <tr>
+          <th>Məhsulun adı</th><th>Cins</th><th>Nakladnoy kodu</th><th class="num">Say</th>
+          <th>Hansı mağazalara gedib</th><th class="num">Satış qiyməti (1 ədəd)</th><th class="num">Alış (yekun)</th><th></th>
+        </tr>
+      </thead>
+      <tbody id="rows"></tbody>
+    </table>
+    <div class="empty" id="empty" hidden></div>
+  </section>
+</div>
+
+<!-- Məhsul formu -->
+<div class="overlay" id="ovItem" hidden>
+  <form class="panel" id="formItem" autocomplete="off" novalidate>
+    <h2 id="itemTitle">Yeni məhsul</h2>
+    <label class="l">Məhsulun adı<input class="field" id="fName" autocapitalize="sentences" enterkeyhint="next"></label>
+    <div class="l">Məhsulun cinsi
+      <div class="seg" id="fKind">
+        <label><input type="radio" name="kind" value="Kişi"><span>Kişi</span></label>
+        <label><input type="radio" name="kind" value="Qadın"><span>Qadın</span></label>
+        <label><input type="radio" name="kind" value="Detskiy"><span>Detskiy</span></label>
+      </div>
+    </div>
+    <div class="grid2">
+      <label class="l">Nakladnoy kodu<input class="field" id="fCode" placeholder="K-21" autocapitalize="characters" autocorrect="off" spellcheck="false"></label>
+      <label class="l">Məhsulun sayı<input class="field" id="fQty" inputmode="numeric" placeholder="0"></label>
+    </div>
+    <div class="grid2">
+      <label class="l">Satış qiyməti (1 ədəd, ₽)<input class="field" id="fSell" inputmode="decimal" placeholder="0.00"></label>
+      <label class="l">Alış məbləği (nakladnoy üzrə ümumi, ₽)<input class="field" id="fBuy" inputmode="decimal" placeholder="0.00"></label>
+    </div>
+    <div>
+      <div class="pick-head" style="margin-bottom: 8px;">
+        <span class="t" id="pickCount">Hansı mağazalara gedir</span>
+        <button type="button" class="btn small" id="toggleAll">Hamısını seç</button>
+      </div>
+      <div class="tiles" id="tiles"></div>
+      <div class="share-box" id="shareBox" aria-live="polite"></div>
+    </div>
+    <div class="err" id="itemErr" role="alert"></div>
+    <div class="row end">
+      <button type="button" class="btn" id="itemCancel">Ləğv et</button>
+      <button type="submit" class="btn primary">Yadda saxla</button>
+    </div>
+  </form>
+</div>
+
+<!-- Əlavə menyu: mağaza adları, ehtiyat -->
+<div class="overlay" id="ovMore" hidden>
+  <div class="panel">
+    <h2>Ayarlar</h2>
+    <div class="row">
+      <button class="btn" id="btnBackup">Ehtiyat nüsxə / İdxal</button>
+    </div>
+    <label class="chk-row">
+      <input type="checkbox" id="autoBk">
+      <span>Hər dəyişiklikdən sonra ehtiyat faylını avtomatik yüklə</span>
+    </label>
+    <p class="note" id="autoNote" style="margin-top:-8px">Fayl telefonun "Yükləmələr" qovluğuna düşür. İlk dəfə telefon bir neçə faylı yükləməyə icazə soruşa bilər, "İcazə ver" de. Fayllar yığıla bilər, köhnələrini vaxtaşırı sil.</p>
+    <div>
+      <button class="btn danger" id="btnClear" style="width:100%">Bütün məhsulları təmizlə</button>
+      <p class="note" id="clearNote" style="margin-top:8px">Silməzdən əvvəl ehtiyat nüsxə götürmək məsləhətdir.</p>
+    </div>
+    <div class="row end"><button class="btn" id="moreClose">Bağla</button></div>
+  </div>
+</div>
+
+<div class="overlay" id="ovBackup" hidden>
+  <div class="panel">
+    <h2>Ehtiyat nüsxə və idxal</h2>
+    <p class="note">Məlumat yalnız bu cihazın brauzerində saxlanır. Brauzerin yaddaşı təmizlənsə itər, buna görə vaxtaşırı ehtiyat nüsxə götür.</p>
+    <div class="row">
+      <button class="btn primary" id="expJson">Ehtiyat (JSON)</button>
+      <button class="btn" id="expCsv">Excel üçün (CSV)</button>
+      <button class="btn" id="waBtn">forAdmins PDF-i WhatsApp-a göndər</button>
+      <button class="btn" id="copyBtn">Mətni kopyala</button>
+    </div>
+    <label class="l">Mətn sahəsi: ixrac nəticəsi burada görünür, idxal üçün bura yapışdır
+      <textarea class="field" id="txt" spellcheck="false"></textarea>
+    </label>
+    <input type="file" id="file" accept=".json,.csv,.txt" aria-label="Fayl seç">
+    <div class="row">
+      <button class="btn" id="impAdd">Mövcudların üstünə əlavə et</button>
+      <button class="btn danger" id="impReplace">Hamısını əvəz et</button>
+    </div>
+    <div class="err" id="bkMsg" role="status"></div>
+    <div class="row end"><button class="btn" id="backupClose">Bağla</button></div>
+  </div>
+</div>
+
+<div class="overlay" id="ovPdf" hidden>
+  <div class="panel">
+    <h2>PDF</h2>
+    <div class="pdfsec" style="border-top:0;padding-top:0">
+      <h3>forMagazine</h3>
+      <p class="note">Hər mağaza üçün ayrıca. Nakladnoy, ad, cins, say və satış qiyməti görünür. Alış görünmür.</p>
+      <div id="pdfList"></div>
+    </div>
+    <div class="pdfsec">
+      <h3>forAdmins</h3>
+      <p class="note">Hamısı ətraflı: satış, alış yekunu, hər mağazanın payı və mağazalar.</p>
+      <div class="row"><button class="btn small" data-pdf="admins" data-mode="dl">Yüklə</button><button class="btn small" data-pdf="admins" data-mode="wa">WhatsApp</button></div>
+    </div>
+    <div class="pdfsec">
+      <h3>forEnd</h3>
+      <p class="note">Nakladnoylar, mağazaların adları, satış qiyməti və alış yekunu.</p>
+      <div class="row"><button class="btn small" data-pdf="end" data-mode="dl">Yüklə</button><button class="btn small" data-pdf="end" data-mode="wa">WhatsApp</button></div>
+    </div>
+    <div class="err" id="pdfMsg" role="status"></div>
+    <div class="row end"><button class="btn" id="pdfClose">Bağla</button></div>
+  </div>
+</div>
+
+<div class="toast" id="toast" hidden></div>
+
+<script>
+(function () {
+  var KEY = 'anbar2-ucot-v1';
+  var APP_ID = 'anbar2-ucot';
+  var N = 10;
+  var KINDS = ['Kişi', 'Qadın', 'Detskiy'];
+  var STORES = ['Пабло', 'Тайланд', 'Хуго', 'Босс', 'Перу', 'Гар', 'Колумбия', 'Батуми', 'Мексика', 'Аби'];
+  var storageOk = true;
+  var editingId = null;
+
+  function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+  function $(s) { return document.querySelector(s); }
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+  function parseNum(v) {
+    var s = String(v == null ? '' : v).replace(/\s/g, '').replace(',', '.');
+    if (s === '' || !/^-?\d*\.?\d+$/.test(s)) return NaN;
+    return parseFloat(s);
+  }
+  function num(v) { var n = parseNum(v); return isFinite(n) ? n : 0; }
+  function money(n) {
+    try { return (+n || 0).toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+    catch (e) { return (+n || 0).toFixed(2); }
+  }
+  function intf(n) { try { return (+n || 0).toLocaleString('ru-RU'); } catch (e) { return String(n || 0); } }
+  /* Nakladnoy üzrə alış yekunu seçilən mağazaların sayına bölünür və qəpiyə qədər yuvarlanır. */
+  function share(it) { return it.stores.length ? Math.round(it.buy / it.stores.length * 100) / 100 : 0; }
+
+  function normalize(s) {
+    var stores = STORES.slice();
+    var items = (Array.isArray(s && s.items) ? s.items : []).filter(function (it) { return !it.demo; }).map(function (it) {
+      var st = (Array.isArray(it.stores) ? it.stores : []).map(Number)
+        .filter(function (i, k, a) { return i >= 0 && i < N && a.indexOf(i) === k; })
+        .sort(function (a, b) { return a - b; });
+      return {
+        id: it.id || uid(), name: String(it.name || ''), type: KINDS.indexOf(it.type) >= 0 ? it.type : '',
+        code: String(it.code || ''), qty: Math.round(num(it.qty)), sell: num(it.sell), buy: num(it.buy), stores: st
+      };
+    });
+    return { stores: stores, items: items };
+  }
+  var loadedFromLS = false;
+  function load() {
+    try {
+      var raw = localStorage.getItem(KEY);
+      if (raw) { loadedFromLS = true; return normalize(JSON.parse(raw)); }
+    } catch (e) { storageOk = false; }
+    return normalize({});
+  }
+  var state = load();
+  /* İkinci nüsxə IndexedDB-dədir: əsas yaddaş təmizlənsə, məlumat buradan bərpa olunur. */
+  var idbReady = false;
+  function idbOpen() {
+    return new Promise(function (res, rej) {
+      try {
+        var r = indexedDB.open('anbar2-ucot', 1);
+        r.onupgradeneeded = function () { r.result.createObjectStore('kv'); };
+        r.onsuccess = function () { res(r.result); };
+        r.onerror = function () { rej(r.error); };
+      } catch (e) { rej(e); }
+    });
+  }
+  function idbPut(json) {
+    idbOpen().then(function (db) {
+      var tx = db.transaction('kv', 'readwrite');
+      tx.objectStore('kv').put(json, 'state');
+      tx.oncomplete = function () { db.close(); };
+    }).catch(function () {});
+  }
+  function idbGet() {
+    return idbOpen().then(function (db) {
+      return new Promise(function (res) {
+        var q = db.transaction('kv').objectStore('kv').get('state');
+        q.onsuccess = function () { db.close(); res(q.result || null); };
+        q.onerror = function () { db.close(); res(null); };
+      });
+    }).catch(function () { return null; });
+  }
+  function save() {
+    var json = JSON.stringify(state);
+    try { localStorage.setItem(KEY, json); }
+    catch (e) { storageOk = false; renderBanner(); }
+    if (idbReady) idbPut(json);
+    autoBackupSoon();
+  }
+  /* Avtomatik ehtiyat: hər dəyişiklikdən sonra JSON faylı telefonun yükləmələr qovluğuna düşür. */
+  var AUTO_KEY = 'anbar2-auto-backup', autoT = null;
+  function autoOn() { try { return localStorage.getItem(AUTO_KEY) === '1'; } catch (e) { return false; } }
+  function setAuto(v) { try { localStorage.setItem(AUTO_KEY, v ? '1' : '0'); } catch (e) {} }
+  function stamp() {
+    var d = new Date(), p = function (n) { return (n < 10 ? '0' : '') + n; };
+    return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) + '-' + p(d.getHours()) + p(d.getMinutes());
+  }
+  function autoDownload() {
+    if (!state.items.length) return;
+    var blob = new Blob([toJSON()], { type: 'application/json' });
+    anchorSave('anbar2-ehtiyat-' + stamp() + '.json', blob);
+  }
+  function autoBackupSoon() {
+    if (!autoOn()) return;
+    clearTimeout(autoT);
+    autoT = setTimeout(autoDownload, 1200);
+  }
+  function toast(msg) {
+    var t = $('#toast');
+    t.textContent = msg; t.hidden = false;
+    clearTimeout(toast._t);
+    toast._t = setTimeout(function () { t.hidden = true; }, 2400);
+  }
+
+  function renderBanner() {
+    var b = $('#banner');
+    b.hidden = storageOk;
+    b.textContent = storageOk ? '' : 'Bu brauzerdə yaddaş işləmir. Dəyişikliklər səhifə bağlananda itəcək. Ayarlardan ehtiyat nüsxə götür.';
+  }
+
+  function filtered() {
+    var q = $('#q').value.trim().toLowerCase();
+    if (!q) return state.items;
+    return state.items.filter(function (it) { return (it.name + ' ' + it.type + ' ' + it.code).toLowerCase().indexOf(q) >= 0; });
+  }
+
+  function render() {
+    var list = filtered();
+    $('#count').textContent = state.items.length ? (list.length === state.items.length ? state.items.length + ' məhsul' : list.length + ' / ' + state.items.length + ' məhsul') : '';
+    var h = '';
+    list.forEach(function (it) {
+      var sq = '';
+      for (var i = 0; i < N; i++) {
+        var on = it.stores.indexOf(i) >= 0;
+        sq += '<span class="sq' + (on ? ' on' : '') + '" title="' + esc(state.stores[i]) + '">' + (i + 1) + '</span>';
+      }
+      var cnt = it.stores.length === N ? 'Bütün mağazalar' : it.stores.length + ' / ' + N + ' mağaza';
+      h += '<tr data-id="' + it.id + '">' +
+        '<td class="name">' + esc(it.name) + '</td>' +
+        '<td data-l="Cins">' + (it.type ? '<span class="chip">' + esc(it.type) + '</span>' : '') + '</td>' +
+        '<td data-l="Nakladnoy kodu" class="mono">' + esc(it.code) + '</td>' +
+        '<td data-l="Say" class="num">' + intf(it.qty) + '</td>' +
+        '<td data-l="Mağazalar" class="stores-td"><div class="stores">' + sq + '</div><div class="cnt">' + cnt + '</div></td>' +
+        '<td data-l="Satış (1 ədəd)" class="num">' + money(it.sell) + ' ₽</td>' +
+        '<td data-l="Alış (yekun)" class="num"><div>' + money(it.buy) + ' ₽<div class="cnt">hər mağaza: ' + (it.stores.length ? money(share(it)) + ' ₽' : '—') + '</div></div></td>' +
+        '<td class="act"><button class="btn small" data-act="edit">Düzəlt</button><button class="btn small danger" data-act="del">Sil</button></td>' +
+        '</tr>';
+    });
+    $('#rows').innerHTML = h;
+    var em = $('#empty');
+    em.hidden = list.length > 0;
+    em.textContent = state.items.length ? 'Heç nə tapılmadı.' : 'Hələ məhsul yoxdur. "+ Yeni məhsul" düyməsini bas.';
+  }
+
+  /* Məhsul formu */
+  function buildTiles(sel) {
+    $('#tiles').innerHTML = state.stores.map(function (n, i) {
+      return '<label class="tile"><input type="checkbox" value="' + i + '"' + (sel.indexOf(i) >= 0 ? ' checked' : '') + '><span><b>' + (i + 1) + '</b>' + esc(n) + '</span></label>';
+    }).join('');
+    updatePick();
+  }
+  function updatePick() {
+    var boxes = document.querySelectorAll('#tiles input');
+    var n = 0; boxes.forEach(function (c) { if (c.checked) n++; });
+    $('#pickCount').textContent = 'Hansı mağazalara gedir: ' + n + ' / ' + N;
+    $('#toggleAll').textContent = n === N ? 'Seçimi təmizlə' : 'Hamısını seç';
+    updateShare();
+  }
+  function updateShare() {
+    var n = document.querySelectorAll('#tiles input:checked').length, b = parseNum($('#fBuy').value), box = $('#shareBox');
+    if (!n || !isFinite(b)) { box.textContent = 'Alış məbləğini yaz və mağaza seç. Hər mağazanın payı burada görünəcək.'; return; }
+    box.innerHTML = 'Hər mağaza üçün: <b>' + esc(money(Math.round(b / n * 100) / 100)) + ' ₽</b> <span class="note">(' + esc(money(b)) + ' ÷ ' + n + ')</span>';
+  }
+  $('#fBuy').addEventListener('input', updateShare);
+  $('#tiles').addEventListener('change', updatePick);
+  $('#toggleAll').addEventListener('click', function () {
+    var boxes = document.querySelectorAll('#tiles input');
+    var all = true; boxes.forEach(function (c) { if (!c.checked) all = false; });
+    boxes.forEach(function (c) { c.checked = !all; });
+    updatePick();
+  });
+
+  function setKind(v) {
+    document.querySelectorAll('#fKind input').forEach(function (r) { r.checked = (r.value === v); });
+  }
+  function getKind() {
+    var v = ''; document.querySelectorAll('#fKind input').forEach(function (r) { if (r.checked) v = r.value; });
+    return v;
+  }
+  function openItem(id) {
+    editingId = id || null;
+    var it = id ? state.items.filter(function (x) { return x.id === id; })[0] : null;
+    $('#itemTitle').textContent = it ? 'Məhsulu düzəlt' : 'Yeni məhsul';
+    $('#fName').value = it ? it.name : '';
+    setKind(it ? it.type : '');
+    $('#fCode').value = it ? it.code : '';
+    $('#fQty').value = it ? it.qty : '';
+    $('#fSell').value = it ? it.sell : '';
+    $('#fBuy').value = it ? it.buy : '';
+    $('#itemErr').textContent = '';
+    buildTiles(it ? it.stores : []);
+    $('#ovItem').hidden = false;
+    if (!it) { try { $('#fName').focus(); } catch (e) {} }
+  }
+  function closeItem() { $('#ovItem').hidden = true; editingId = null; }
+
+  $('#formItem').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var err = $('#itemErr');
+    var name = $('#fName').value.trim();
+    var kind = getKind();
+    var code = $('#fCode').value.trim();
+    var qty = parseNum($('#fQty').value), sell = parseNum($('#fSell').value), buy = parseNum($('#fBuy').value);
+    if (!name) { err.textContent = 'Məhsulun adını yaz.'; return; }
+    if (!kind) { err.textContent = 'Cinsi seç: Kişi, Qadın və ya Detskiy.'; return; }
+    if (!code) { err.textContent = 'Nakladnoy kodunu yaz, məsələn K-21.'; return; }
+    if (!isFinite(qty) || qty < 0) { err.textContent = 'Məhsulun sayını düzgün yaz.'; return; }
+    if (!isFinite(sell) || sell < 0) { err.textContent = 'Satış qiymətini düzgün yaz.'; return; }
+    if (!isFinite(buy) || buy < 0) { err.textContent = 'Alış məbləğini düzgün yaz.'; return; }
+    var sel = [];
+    document.querySelectorAll('#tiles input:checked').forEach(function (c) { sel.push(+c.value); });
+    var data = { name: name, type: kind, code: code, qty: Math.round(qty), sell: sell, buy: buy, stores: sel.sort(function (a, b) { return a - b; }) };
+    if (editingId) {
+      var it = state.items.filter(function (x) { return x.id === editingId; })[0];
+      if (it) Object.assign(it, data);
+    } else {
+      data.id = uid();
+      state.items.unshift(data);
+    }
+    save(); closeItem(); render(); toast('Yadda saxlandı');
+  });
+  $('#itemCancel').addEventListener('click', closeItem);
+  $('#btnAdd').addEventListener('click', function () { openItem(null); });
+
+  /* Siyahı əməliyyatları */
+  var delArm = null;
+  $('#rows').addEventListener('click', function (e) {
+    var btn = e.target.closest('button[data-act]');
+    if (!btn) return;
+    var id = btn.closest('tr').getAttribute('data-id');
+    if (btn.getAttribute('data-act') === 'edit') { openItem(id); return; }
+    if (delArm === id) {
+      state.items = state.items.filter(function (x) { return x.id !== id; });
+      delArm = null; save(); render(); toast('Silindi');
+    } else {
+      delArm = id; btn.textContent = 'Əminsən?';
+      clearTimeout(openItem._t);
+      openItem._t = setTimeout(function () { delArm = null; render(); }, 3000);
+    }
+  });
+  $('#q').addEventListener('input', render);
+
+  /* Ayarlar */
+  $('#btnMore').addEventListener('click', function () { $('#ovMore').hidden = false; });
+  $('#moreClose').addEventListener('click', function () { $('#ovMore').hidden = true; });
+  var clearArm = false, clearT = null;
+  function resetClear() {
+    clearArm = false; clearTimeout(clearT);
+    var b = $('#btnClear'); b.textContent = 'Bütün məhsulları təmizlə'; b.disabled = !state.items.length;
+  }
+  $('#btnMore').addEventListener('click', function () { resetClear(); $('#autoBk').checked = autoOn(); });
+  $('#autoBk').addEventListener('change', function () {
+    setAuto(this.checked);
+    if (this.checked) {
+      if (state.items.length) { autoDownload(); toast('Avtomatik ehtiyat yandırıldı'); }
+      else toast('Avtomatik ehtiyat yandırıldı. Məhsul əlavə ediləndə fayl yüklənəcək.');
+    } else toast('Avtomatik ehtiyat söndürüldü');
+  });
+  $('#btnClear').addEventListener('click', function () {
+    var b = this;
+    if (!state.items.length) return;
+    if (!clearArm) {
+      clearArm = true;
+      b.textContent = 'Əminsən? ' + state.items.length + ' məhsul silinəcək. Bir daha bas';
+      clearT = setTimeout(resetClear, 4000);
+      return;
+    }
+    state.items = []; save(); render(); resetClear();
+    $('#ovMore').hidden = true; toast('Bütün məhsullar təmizləndi');
+  });
+
+  /* Ehtiyat / idxal */
+  function csvCell(v) {
+    var s = String(v == null ? '' : v);
+    return /[;"\r\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+  }
+  function toCSV() {
+    var rows = [['Məhsulun adı', 'Cins', 'Nakladnoy kodu', 'Say', 'Mağazalar', 'Satış qiyməti (1 ədəd)', 'Alış məbləği (yekun)']];
+    state.items.forEach(function (it) {
+      rows.push([it.name, it.type, it.code, it.qty, it.stores.map(function (i) { return state.stores[i]; }).join(' | '),
+        String(it.sell).replace('.', ','), String(it.buy).replace('.', ',')]);
+    });
+    return '﻿' + rows.map(function (r) { return r.map(csvCell).join(';'); }).join('\r\n');
+  }
+  function toJSON() { return JSON.stringify({ app: APP_ID, version: 2, stores: state.stores, items: state.items }, null, 1); }
+
+  var IS_PHONE = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  function asBlob(data, mime) { return data instanceof Blob ? data : new Blob([data], { type: mime }); }
+  function anchorSave(name, blob) {
+    var url = URL.createObjectURL(blob), a = document.createElement('a');
+    a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function () { URL.revokeObjectURL(url); }, 5000);
+  }
+  async function deliver(name, data, mime) {
+    var blob = asBlob(data, mime);
+    try {
+      if (window.claude && window.claude.use) {
+        var d = await window.claude.use('downloads');
+        if (d) { await d.save({ filename: name, data: blob }); return 'saved'; }
+      }
+    } catch (e) { if (e && e.code === 'declined') return 'declined'; }
+    if (IS_PHONE && navigator.canShare && window.File) {
+      try {
+        var f = new File([blob], name, { type: mime });
+        if (navigator.canShare({ files: [f] })) { await navigator.share({ files: [f], title: name }); return 'saved'; }
+      } catch (e) {
+        if (e && e.name === 'AbortError') return 'declined';
+        return 'tap';
+      }
+    }
+    anchorSave(name, blob);
+    return 'saved';
+  }
+  function offerTap(msgEl, name, blob, mime) {
+    msgEl.textContent = 'Fayl hazırdır. ';
+    var b = document.createElement('button'); b.type = 'button'; b.className = 'btn small'; b.textContent = 'Saxla / paylaş';
+    b.addEventListener('click', function () {
+      try {
+        var f = new File([blob], name, { type: mime });
+        navigator.share({ files: [f], title: name }).then(function () { msgEl.textContent = ''; }, function (e) { if (!e || e.name !== 'AbortError') anchorSave(name, blob); });
+      } catch (e) { anchorSave(name, blob); }
+    });
+    msgEl.appendChild(b);
+  }
+  function report(res, msgEl, name, blob, mime) {
+    if (res === 'tap') { offerTap(msgEl, name, blob, mime); return; }
+    msgEl.textContent = res === 'declined' ? 'Ləğv edildi.' : '';
+    if (res === 'saved') toast('Fayl hazırdır');
+  }
+  async function saveFile(name, text, mime) {
+    $('#txt').value = text;
+    var blob = asBlob(text, mime);
+    report(await deliver(name, blob, mime), $('#bkMsg'), name, blob, mime);
+  }
+  $('#btnBackup').addEventListener('click', function () { $('#ovMore').hidden = true; $('#bkMsg').textContent = ''; $('#ovBackup').hidden = false; });
+  $('#backupClose').addEventListener('click', function () { $('#ovBackup').hidden = true; });
+  $('#expJson').addEventListener('click', function () { saveFile('anbar2-ehtiyat.json', toJSON(), 'application/json'); });
+  $('#expCsv').addEventListener('click', function () { saveFile('anbar2-mehsullar.csv', toCSV(), 'text/csv'); });
+  $('#waBtn').addEventListener('click', function () {
+    var msg = $('#bkMsg'), b = this, old = b.textContent;
+    if (!state.items.length) { msg.textContent = 'Siyahı boşdur.'; return; }
+    b.disabled = true; b.textContent = 'Hazırlanır…'; msg.textContent = '';
+    setTimeout(async function () {
+      try { var d = makeDoc('admins'); await sharePdf(d.name, makePDF(d.canvases), msg); }
+      catch (e) { msg.textContent = 'PDF hazırlanmadı. Yenidən cəhd et.'; }
+      b.disabled = false; b.textContent = old;
+    }, 30);
+  });
+  $('#copyBtn').addEventListener('click', async function () {
+    var ta = $('#txt');
+    if (!ta.value) ta.value = toJSON();
+    try { await navigator.clipboard.writeText(ta.value); toast('Kopyalandı'); }
+    catch (e) { ta.focus(); ta.select(); $('#bkMsg').textContent = 'Avtomatik kopyalama olmadı. Mətn seçildi, özün kopyala.'; }
+  });
+  $('#file').addEventListener('change', function (e) {
+    var f = e.target.files && e.target.files[0];
+    if (!f) return;
+    var r = new FileReader();
+    r.onload = function () { $('#txt').value = String(r.result || ''); $('#bkMsg').textContent = 'Fayl oxundu. İndi "əlavə et" və ya "əvəz et" düyməsini bas.'; };
+    r.readAsText(f);
+  });
+
+  function parseCSV(text) {
+    text = text.replace(/^﻿/, '');
+    var first = text.split(/\r?\n/)[0] || '';
+    var delim = first.indexOf(';') >= 0 ? ';' : (first.indexOf('\t') >= 0 ? '\t' : ',');
+    var rows = [], row = [], cell = '', q = false;
+    for (var i = 0; i < text.length; i++) {
+      var c = text[i];
+      if (q) {
+        if (c === '"') { if (text[i + 1] === '"') { cell += '"'; i++; } else q = false; }
+        else cell += c;
+      } else if (c === '"') q = true;
+      else if (c === delim) { row.push(cell); cell = ''; }
+      else if (c === '\n') { row.push(cell); rows.push(row); row = []; cell = ''; }
+      else if (c !== '\r') cell += c;
+    }
+    if (cell !== '' || row.length) { row.push(cell); rows.push(row); }
+    return rows.filter(function (r) { return r.some(function (x) { return String(x).trim() !== ''; }); });
+  }
+  function storeIndexes(s, names) {
+    var out = [];
+    String(s || '').split(/[|,]/).forEach(function (part) {
+      part = part.trim(); if (!part) return;
+      var idx = -1;
+      names.forEach(function (n, i) { if (n.toLowerCase() === part.toLowerCase()) idx = i; });
+      if (idx < 0 && /^\d+$/.test(part) && +part >= 1 && +part <= N) idx = +part - 1;
+      if (idx >= 0 && out.indexOf(idx) < 0) out.push(idx);
+    });
+    return out;
+  }
+  function parseInput(text) {
+    text = text.trim();
+    if (!text) throw new Error('Mətn sahəsi boşdur.');
+    if (text[0] === '{' || text[0] === '[') {
+      var j = JSON.parse(text);
+      if (Array.isArray(j)) j = { items: j };
+      if (!Array.isArray(j.items)) throw new Error('JSON-da məhsul siyahısı tapılmadı.');
+      if (j.app && j.app !== APP_ID) throw new Error('Bu ehtiyat faylı başqa anbar tətbiqinə aiddir (mağazaları fərqlidir).');
+      return { stores: j.stores, items: j.items };
+    }
+    var rows = parseCSV(text);
+    var map = { name: 0, type: 1, code: 2, qty: 3, stores: 4, sell: 5, buy: 6 };
+    var head = rows[0] || [];
+    if (/nakl|məhsul|^ad$|cins/i.test(String(head[0] || ''))) {
+      var m = {};
+      head.forEach(function (h, i) {
+        h = String(h).toLowerCase();
+        if (/nakl/.test(h)) m.code = i;
+        else if (/cins/.test(h)) m.type = i;
+        else if (/say/.test(h)) m.qty = i;
+        else if (/alış|alis/.test(h)) m.buy = i;
+        else if (/satış|satis/.test(h)) m.sell = i;
+        else if (/mağaza|magaza/.test(h)) m.stores = i;
+        else if (/ad/.test(h)) m.name = i;
+      });
+      map = Object.assign({}, map, m);
+      rows.shift();
+    }
+    var names = state.stores;
+    var items = rows.map(function (r) {
+      return { id: uid(), name: r[map.name] || '', type: r[map.type] || '', code: r[map.code] || '', qty: num(r[map.qty]), sell: num(r[map.sell]), buy: num(r[map.buy]), stores: storeIndexes(r[map.stores], names) };
+    }).filter(function (it) { return it.name; });
+    if (!items.length) throw new Error('CSV-də oxunacaq sətir tapılmadı.');
+    return { items: items };
+  }
+  var replaceArm = false;
+  $('#impAdd').addEventListener('click', function () { doImport(false); });
+  $('#impReplace').addEventListener('click', function () {
+    var b = this;
+    if (!replaceArm) {
+      replaceArm = true; b.textContent = 'Əminsən? Bir daha bas';
+      setTimeout(function () { replaceArm = false; b.textContent = 'Hamısını əvəz et'; }, 3500);
+      return;
+    }
+    replaceArm = false; b.textContent = 'Hamısını əvəz et';
+    doImport(true);
+  });
+  function doImport(replace) {
+    var msg = $('#bkMsg');
+    try {
+      var inc = parseInput($('#txt').value);
+      var norm = normalize({ stores: inc.stores || state.stores, items: inc.items });
+      if (replace) {
+        state = { stores: inc.stores ? norm.stores : state.stores, items: norm.items };
+      } else {
+        norm.items.forEach(function (it) { it.id = uid(); });
+        state.items = norm.items.concat(state.items);
+      }
+      save(); render();
+      msg.textContent = norm.items.length + ' məhsul idxal edildi.';
+    } catch (e) { msg.textContent = 'İdxal olmadı: ' + (e && e.message ? e.message : 'format başa düşülmədi.'); }
+  }
+
+  /* PDF-lər: səhifələr kanvasda çəkilir (kiril və Azərbaycan hərfləri düzgün çıxsın deyə), sonra PDF-ə yığılır */
+  var BRAND = 'ХитСезонАнбар';
+  var FONT = 'system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif';
+  function sortByCode(list) { return list.slice().sort(function (a, b) { return a.code.localeCompare(b.code, 'az', { numeric: true }); }); }
+  function itemsFor(i) { return sortByCode(state.items.filter(function (it) { return it.stores.indexOf(i) >= 0; })); }
+  function storeNames(it) {
+    if (it.stores.length === N) return 'Bütün mağazalar';
+    return it.stores.length ? it.stores.map(function (i) { return state.stores[i]; }).join(', ') : '—';
+  }
+  function openPdf() {
+    $('#pdfList').innerHTML = state.stores.map(function (n, i) {
+      var its = itemsFor(i), q = 0; its.forEach(function (it) { q += it.qty; });
+      var dis = its.length ? '' : ' disabled';
+      return '<div class="pdfrow"><div class="pdfname"><b>' + (i + 1) + '</b><div><div>' + esc(n) + '</div><div class="note">' +
+        its.length + ' məhsul · ' + intf(q) + ' ədəd</div></div></div>' +
+        '<div class="row" style="flex:none;flex-wrap:nowrap"><button class="btn small" data-pdf="mag:' + i + '" data-mode="dl"' + dis + '>Yüklə</button>' +
+        '<button class="btn small" data-pdf="mag:' + i + '" data-mode="wa"' + dis + '>WhatsApp</button></div></div>';
+    }).join('');
+    var none = !state.items.length;
+    document.querySelectorAll('#ovPdf [data-pdf="admins"], #ovPdf [data-pdf="end"]').forEach(function (b) { b.disabled = none; });
+    $('#pdfMsg').textContent = '';
+    $('#ovPdf').hidden = false;
+  }
+  function fitText(g, text, maxW) {
+    text = String(text);
+    if (g.measureText(text).width <= maxW) return text;
+    while (text.length > 1 && g.measureText(text + '…').width > maxW) text = text.slice(0, -1);
+    return text + '…';
+  }
+  function wrapText(g, text, maxW, maxLines) {
+    var words = String(text).split(/\s+/), lines = [], cur = '';
+    words.forEach(function (w) {
+      while (g.measureText(w).width > maxW && w.length > 1) {
+        var k = w.length;
+        while (k > 1 && g.measureText(w.slice(0, k)).width > maxW) k--;
+        if (cur) { lines.push(cur); cur = ''; }
+        lines.push(w.slice(0, k)); w = w.slice(k);
+      }
+      var t = cur ? cur + ' ' + w : w;
+      if (g.measureText(t).width <= maxW) cur = t; else { lines.push(cur); cur = w; }
+    });
+    if (cur) lines.push(cur);
+    if (!lines.length) lines = [''];
+    if (lines.length > maxLines) {
+      lines = lines.slice(0, maxLines);
+      lines[maxLines - 1] = fitText(g, lines[maxLines - 1] + '…', maxW);
+    }
+    return lines;
+  }
+  function dateParts() {
+    var d = new Date(), p = function (n) { return (n < 10 ? '0' : '') + n; };
+    return { dot: p(d.getDate()) + '.' + p(d.getMonth() + 1) + '.' + d.getFullYear(), iso: d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) };
+  }
+  function drawFit(g, text, x, y, maxW, fs, bold) {
+    var sz = fs, wt = bold ? '700 ' : '500 ';
+    g.font = wt + sz + 'px ' + FONT;
+    while (sz > 12 && g.measureText(text).width > maxW) { sz--; g.font = wt + sz + 'px ' + FONT; }
+    g.fillText(text, x, y);
+  }
+  /* Ümumi cədvəl çəkən funksiya: üç PDF-in hamısı bundan istifadə edir. */
+  function buildPdf(o) {
+    var W = 1754, H = 1240, M = 90, usable = W - 2 * M;
+    var fs = o.fs || 24, lh = fs + 8, x = M;
+    var cols = o.cols.map(function (c) {
+      var r = { x: x, w: c.w, label: c.label, right: !!c.right, bold: !!c.bold, wrap: c.wrap || 0, get: c.get, muted: !!c.muted };
+      x += c.w; return r;
+    });
+    var headH = cols.some(function (c) { return c.label.indexOf('\n') >= 0; }) ? 80 : 56;
+    var body = '500 ' + fs + 'px ' + FONT, bold = '700 ' + fs + 'px ' + FONT;
+    var pages = [], y = 0, g = null;
+    function newPage() {
+      var c = document.createElement('canvas'); c.width = W; c.height = H;
+      g = c.getContext('2d'); g.fillStyle = '#ffffff'; g.fillRect(0, 0, W, H);
+      pages.push({ c: c, g: g });
+      g.textAlign = 'left'; g.textBaseline = 'alphabetic';
+      if (pages.length === 1) {
+        g.fillStyle = '#111111'; g.font = '700 50px ' + FONT; g.fillText(fitText(g, o.title, W - 2 * M - 260), M, 130);
+        g.fillStyle = '#666666'; g.font = '400 26px ' + FONT; g.fillText(fitText(g, o.sub, W - 2 * M - 260), M, 178);
+        g.textAlign = 'right'; g.font = '500 28px ' + FONT; g.fillStyle = '#111111'; g.fillText(dateParts().dot, W - M, 130); g.textAlign = 'left';
+        y = 230;
+      } else {
+        g.fillStyle = '#666666'; g.font = '600 28px ' + FONT; g.fillText(fitText(g, o.title, W - 2 * M - 200) + ' (davamı)', M, 120);
+        y = 160;
+      }
+      g.fillStyle = '#eef1f4'; g.fillRect(M, y, usable, headH);
+      g.fillStyle = '#555555'; g.font = '700 19px ' + FONT; g.textBaseline = 'middle';
+      cols.forEach(function (col) {
+        var ls = col.label.split('\n');
+        g.textAlign = col.right ? 'right' : 'left';
+        ls.forEach(function (ln, li) {
+          g.fillText(ln, col.right ? col.x + col.w - 14 : col.x + 14, y + headH / 2 + (li - (ls.length - 1) / 2) * 24);
+        });
+      });
+      g.textBaseline = 'top'; g.textAlign = 'left';
+      y += headH;
+    }
+    newPage();
+    o.rows.forEach(function (row, idx) {
+      var cells = cols.map(function (col) {
+        g.font = col.bold ? bold : body;
+        var t = String(col.get(row, idx));
+        if (col.right) return [t];
+        return col.wrap ? wrapText(g, t, col.w - 28, col.wrap) : [fitText(g, t, col.w - 28)];
+      });
+      var lines = 1; cells.forEach(function (c) { if (c.length > lines) lines = c.length; });
+      var rowH = lines * lh + 22;
+      if (y + rowH > H - 110) newPage();
+      g.textBaseline = 'top';
+      cols.forEach(function (col, ci) {
+        g.font = col.bold ? bold : body;
+        g.fillStyle = col.muted ? '#777777' : '#111111';
+        g.textAlign = col.right ? 'right' : 'left';
+        if (col.right) drawFit(g, cells[ci][0], col.x + col.w - 14, y + 11, col.w - 28, fs, col.bold);
+        else cells[ci].forEach(function (ln, li) { g.fillText(ln, col.x + 14, y + 11 + li * lh); });
+      });
+      g.textAlign = 'left'; g.strokeStyle = '#d5dbe1'; g.lineWidth = 2;
+      g.beginPath(); g.moveTo(M, y + rowH); g.lineTo(W - M, y + rowH); g.stroke();
+      y += rowH;
+    });
+    if (o.totals) {
+      if (y + 70 > H - 110) newPage();
+      g.fillStyle = '#eef1f4'; g.fillRect(M, y + 10, usable, 60);
+      g.fillStyle = '#111111'; g.textBaseline = 'middle'; g.font = '700 26px ' + FONT; g.textAlign = 'left';
+      g.fillText(o.totals.label, M + 14, y + 41);
+      g.textAlign = 'right';
+      Object.keys(o.totals.cells).forEach(function (k) {
+        var col = cols[+k]; drawFit(g, o.totals.cells[k], col.x + col.w - 14, y + 41, col.w - 28, 26, true);
+      });
+    }
+    pages.forEach(function (p, i) {
+      p.g.textBaseline = 'alphabetic'; p.g.fillStyle = '#888888'; p.g.font = '400 22px ' + FONT;
+      p.g.textAlign = 'left'; p.g.fillText(fitText(p.g, o.footer || BRAND, 1000), M, H - 50);
+      p.g.textAlign = 'right'; p.g.fillText((i + 1) + ' / ' + pages.length, W - M, H - 50);
+    });
+    return pages.map(function (p) { return p.c; });
+  }
+
+  /* forMagazine: hər mağaza üçün ayrıca, alış yoxdur */
+  function renderMagazine(si) {
+    var its = itemsFor(si), q = 0; its.forEach(function (it) { q += it.qty; });
+    return buildPdf({
+      title: state.stores[si], sub: BRAND + ' · Göndərilən məhsulların siyahısı', footer: BRAND + ' · ' + state.stores[si], fs: 26,
+      cols: [
+        { w: 60, label: '№', muted: true, get: function (r, i) { return i + 1; } },
+        { w: 250, label: 'NAKLADNOY', bold: true, get: function (r) { return r.code; } },
+        { w: 690, label: 'MƏHSULUN ADI', wrap: 3, get: function (r) { return r.name; } },
+        { w: 200, label: 'CİNS', get: function (r) { return r.type; } },
+        { w: 150, label: 'SAY', right: true, bold: true, get: function (r) { return intf(r.qty); } },
+        { w: 224, label: 'SATIŞ QİYMƏTİ\n(1 ədəd, ₽)', right: true, get: function (r) { return money(r.sell); } }
+      ],
+      rows: its, totals: { label: 'Cəmi: ' + its.length + ' məhsul', cells: { 4: intf(q) } }
+    });
+  }
+  /* forAdmins: hər şey ətraflı */
+  function renderAdmins() {
+    var its = sortByCode(state.items), q = 0, b = 0; its.forEach(function (it) { q += it.qty; b += it.buy; });
+    return buildPdf({
+      title: BRAND, sub: 'forAdmins · Bütün məlumatlar', fs: 22,
+      cols: [
+        { w: 50, label: '№', muted: true, get: function (r, i) { return i + 1; } },
+        { w: 170, label: 'NAKLADNOY', bold: true, get: function (r) { return r.code; } },
+        { w: 330, label: 'MƏHSULUN ADI', wrap: 3, get: function (r) { return r.name; } },
+        { w: 110, label: 'CİNS', get: function (r) { return r.type; } },
+        { w: 90, label: 'SAY', right: true, bold: true, get: function (r) { return intf(r.qty); } },
+        { w: 150, label: 'SATIŞ\n(1 ədəd)', right: true, get: function (r) { return money(r.sell); } },
+        { w: 170, label: 'ALIŞ\n(yekun)', right: true, get: function (r) { return money(r.buy); } },
+        { w: 110, label: 'MAĞAZA\nSAYI', right: true, get: function (r) { return r.stores.length; } },
+        { w: 150, label: 'HƏR\nMAĞAZAYA', right: true, bold: true, get: function (r) { return r.stores.length ? money(share(r)) : '—'; } },
+        { w: 244, label: 'MAĞAZALAR', wrap: 6, get: storeNames }
+      ],
+      rows: its, totals: { label: 'Cəmi: ' + its.length + ' nakladnoy', cells: { 4: intf(q), 6: money(b) } }
+    });
+  }
+  /* forEnd: nakladnoy, mağazalar, satış, alış yekunu */
+  function renderEnd() {
+    var its = sortByCode(state.items), b = 0; its.forEach(function (it) { b += it.buy; });
+    return buildPdf({
+      title: BRAND, sub: 'forEnd · Nakladnoylar üzrə yekun', fs: 26,
+      cols: [
+        { w: 260, label: 'NAKLADNOY', bold: true, get: function (r) { return r.code; } },
+        { w: 804, label: 'MAĞAZALAR', wrap: 4, get: storeNames },
+        { w: 250, label: 'SATIŞ QİYMƏTİ\n(1 ədəd, ₽)', right: true, get: function (r) { return money(r.sell); } },
+        { w: 260, label: 'ALIŞ (YEKUN)\n(₽)', right: true, bold: true, get: function (r) { return money(r.buy); } }
+      ],
+      rows: its, totals: { label: 'Cəmi: ' + its.length + ' nakladnoy', cells: { 3: money(b) } }
+    });
+  }
+  function jpegBytes(c) {
+    var b = atob(c.toDataURL('image/jpeg', 0.92).split(',')[1]), u = new Uint8Array(b.length);
+    for (var i = 0; i < b.length; i++) u[i] = b.charCodeAt(i);
+    return u;
+  }
+  function makePDF(canvases) {
+    var enc = new TextEncoder(), chunks = [], offs = [], pos = 0;
+    function push(x) { var b = typeof x === 'string' ? enc.encode(x) : x; chunks.push(b); pos += b.length; }
+    function begin(n) { offs[n] = pos; push(n + ' 0 obj\n'); }
+    var PW = 841.89, PH = 595.28, np = canvases.length, kids = [];
+    for (var i = 0; i < np; i++) kids.push((3 + 3 * i) + ' 0 R');
+    push('%PDF-1.4\n');
+    begin(1); push('<< /Type /Catalog /Pages 2 0 R >>\nendobj\n');
+    begin(2); push('<< /Type /Pages /Kids [' + kids.join(' ') + '] /Count ' + np + ' >>\nendobj\n');
+    canvases.forEach(function (c, i) {
+      var pn = 3 + 3 * i, cn = pn + 1, im = pn + 2, jb = jpegBytes(c);
+      var content = 'q ' + PW + ' 0 0 ' + PH + ' 0 0 cm /Im0 Do Q';
+      begin(pn); push('<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ' + PW + ' ' + PH + '] /Resources << /XObject << /Im0 ' + im + ' 0 R >> >> /Contents ' + cn + ' 0 R >>\nendobj\n');
+      begin(cn); push('<< /Length ' + content.length + ' >>\nstream\n' + content + '\nendstream\nendobj\n');
+      begin(im); push('<< /Type /XObject /Subtype /Image /Width ' + c.width + ' /Height ' + c.height + ' /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ' + jb.length + ' >>\nstream\n');
+      push(jb); push('\nendstream\nendobj\n');
+    });
+    var total = 3 + 3 * np, xref = pos, x = 'xref\n0 ' + total + '\n0000000000 65535 f \n';
+    for (var n = 1; n < total; n++) x += ('0000000000' + offs[n]).slice(-10) + ' 00000 n \n';
+    push(x + 'trailer\n<< /Size ' + total + ' /Root 1 0 R >>\nstartxref\n' + xref + '\n%%EOF');
+    return new Blob(chunks, { type: 'application/pdf' });
+  }
+  function slug(si) {
+    var base = '';
+    try { base = state.stores[si].replace(/[^\p{L}\p{N}]+/gu, '-').replace(/^-+|-+$/g, ''); } catch (e) {}
+    return base || ('magaza-' + (si + 1));
+  }
+  function makeDoc(spec) {
+    var iso = dateParts().iso;
+    if (spec.indexOf('mag:') === 0) { var si = +spec.slice(4); return { name: 'forMagazine-' + slug(si) + '-' + iso + '.pdf', canvases: renderMagazine(si) }; }
+    if (spec === 'admins') return { name: 'forAdmins-' + iso + '.pdf', canvases: renderAdmins() };
+    return { name: 'forEnd-' + iso + '.pdf', canvases: renderEnd() };
+  }
+  async function sharePdf(name, blob, msg) {
+    msg.textContent = '';
+    try {
+      if (navigator.canShare && window.File) {
+        var f = new File([blob], name, { type: 'application/pdf' });
+        if (navigator.canShare({ files: [f] })) { await navigator.share({ files: [f], title: name }); return; }
+      }
+    } catch (e) { if (e && e.name === 'AbortError') return; }
+    var res = await deliver(name, blob, 'application/pdf');
+    report(res, msg, name, blob, 'application/pdf');
+    if (res === 'saved') msg.textContent = 'WhatsApp-a birbaşa göndərmək bu görünüşdə olmadı, PDF yükləndi. WhatsApp-ı aç, söhbətdə ataş düyməsindən "Sənəd" seçib PDF-i göndər.';
+  }
+  $('#btnPdf').addEventListener('click', openPdf);
+  $('#pdfClose').addEventListener('click', function () { $('#ovPdf').hidden = true; });
+  $('#ovPdf').addEventListener('click', function (e) {
+    var btn = e.target.closest('button[data-pdf]');
+    if (!btn || btn.disabled) return;
+    var spec = btn.getAttribute('data-pdf'), wa = btn.getAttribute('data-mode') === 'wa', msg = $('#pdfMsg'), old = btn.textContent;
+    btn.disabled = true; btn.textContent = 'Hazırlanır…'; msg.textContent = '';
+    setTimeout(async function () {
+      try {
+        var d = makeDoc(spec), blob = makePDF(d.canvases);
+        if (wa) await sharePdf(d.name, blob, msg);
+        else report(await deliver(d.name, blob, 'application/pdf'), msg, d.name, blob, 'application/pdf');
+      } catch (err) { msg.textContent = 'PDF hazırlanmadı. Yenidən cəhd et.'; }
+      btn.disabled = false; btn.textContent = old;
+    }, 30);
+  });
+
+  document.querySelectorAll('.overlay').forEach(function (ov) {
+    ov.addEventListener('mousedown', function (e) { if (e.target === ov) ov.hidden = true; });
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') document.querySelectorAll('.overlay').forEach(function (ov) { ov.hidden = true; });
+  });
+
+  render(); renderBanner();
+  idbGet().then(function (json) {
+    idbReady = true;
+    try {
+      var s = json ? normalize(JSON.parse(json)) : null;
+      if (s && s.items.length && !loadedFromLS) { state = s; save(); render(); toast('Məlumat bərpa edildi'); }
+      else if (state.items.length) idbPut(JSON.stringify(state));
+    } catch (e) {}
+  });
+  try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch (e) {}
+  if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)) {
+    window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () {}); });
+  }
+})();
+</script>
+</body>
+</html>
